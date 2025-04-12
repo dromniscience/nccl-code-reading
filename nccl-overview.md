@@ -9,6 +9,8 @@ Organization of this overview:
 - [NCCL Runtime: An Overview](#nccl-runtime-an-overview)
 - [NCCL Initialization: More Words on Channel Search](#nccl-initialization-more-words-on-channel-search)
 
+Please refer to the numbered notes (e.g., [01-unique-id](01-unique-id.md)) for more detailed explanation of the NCCL code.
+
 ## Typical Workflow
 
 ```c++
