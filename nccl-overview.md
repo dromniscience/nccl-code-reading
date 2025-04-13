@@ -73,6 +73,24 @@ ncclGroupEnd();
 
 ## NCCL Initialization: An Overview
 
+> **Note:** We explain the details of NCCL initialization in the following notes.
+>
+> - [01-unique-id](01-unique-id.md)
+>
+> - [02-bootstrap-network](02-bootstrap-network.md)
+>
+> - [03-XML-conversion](03-XML-conversion.md)
+>
+> - [04-path-finding](04-path-finding)
+>
+> - [05-channel-search](05-channel-search.md)
+>
+> - [06-channel-connect](06-channel-connect.md)
+>
+> - [07-transport-setup](07-transport-setup.md)
+>
+> - [08-tuning-model](08-tuning-model.md)
+
 Communicator initialization is done by two functions sequentially: `ncclGetUniqueId()` and `ncclCommInitRank()`.
 
 - `ncclGetUniqueId()`

@@ -18,6 +18,8 @@ This function aims to build the fully functional (1) bootstrap network, (2) data
 
 - [07-transport-setup](07-transport-setup.md)
 
+- [08-tuning-model](08-tuning-model.md)
+
 In this note, we focus on the first three things done by `ncclCommInitRank()`: (1) detecting the inter-node network (e.g., is it the RDMA network?), (2) building the bootstrap network, and (3) detecting local topology (local=intra-node) and representing it with an XML tree.
 
 Before we move on, recall that [`ncclComm_t`](https://github.com/NVIDIA/nccl/blob/v2.25.1-1/src/nccl.h.in#L33) is a pointer to [`ncclComm`](https://github.com/NVIDIA/nccl/blob/v2.25.1-1/src/include/comm.h#L404-L614), which holds tons of context data (`sizeof(ncclComm)` is 501072!) needed by further communication. Initially, the argument of this function, `newcomm`, is just a null pointer.
