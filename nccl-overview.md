@@ -69,6 +69,8 @@ ncclAllReduce(sendbuff3, recvbuff3, count3, datatype, comm, stream);
 ncclGroupEnd();
 ```
 
+> **Note:** You may wonder what happens if we use multiple streams in an NCCL group. Since, if possible, NCCL will fuse multiple calls into one kernel, shouldn't only one stream execute it? We will mention in [09-p2p-functions](09-p2p-functions.md) that NCCL launches all work to the first stream in a group call. NCCL internally enforces a stream dependency of all involved streams before the NCCL kernel starts and blocks them until the NCCL kernel completes. It will behave as if the NCCL group operation was posted on every stream. You can also see an explanation [here](https://docs.nvidia.com/deeplearning/nccl/user-guide/docs/usage/streams.html#mixing-multiple-streams-within-the-same-ncclgroupstart-end-group).
+
 **NCCL group calls only work for NCCL functions.** You should only put CUDA calls that change the current thread's working context (e.g., `cudaSetDevice()`) in the group calls, as their effect is immediately resolved in subsequent NCCL calls. However, you should not put CUDA calls that involve kernel launch in a group call since they are issued immediately rather than being batched until `ncclGroupEnd()` is called.
 
 ## NCCL Initialization: An Overview
@@ -258,7 +260,7 @@ Finally, we emphasize some characteristics of NCCL.
 
 ## NCCL Runtime: An Overview
 
-**NCCL maintains a P2P task queue and a collective task queue inside [`comm->planner`](https://github.com/NVIDIA/nccl/blob/v2.25.1-1/src/include/comm.h#L572) to trace the work inside a group call.** You can think of a non-group call as a group call containing only one communication function. Each NCCL communication function enqueues a task to the corresponding queue, which records all the necessary information that describes the task. Then, execution occurs asynchronously when a group call ends. NCCL fetches all the queued tasks, distributes them to every channel, prepares kernel launch configuration and per-channel task description, and finally launches kernel. Typically, one block in the kernel launch handles one channel's task, and every block operates on the corresponding channel's task description. Thus, different blocks can have different working behaviors, and they are running in parallel.
+**NCCL maintains a P2P task queue and a collective task queue inside [`comm->planner`](https://github.com/NVIDIA/nccl/blob/v2.25.1-1/src/include/comm.h#L572) to trace the work inside a group call.** You can think of a non-group call as a group call containing only one communication function. Each NCCL communication function enqueues a task to the corresponding queue, which records all the necessary information that describes the task. Then, execution occurs asynchronously when a group call ends. NCCL fetches all the queued tasks, Codistributes them to every channel, prepares kernel launch configuration and per-channel task description, and finally launches kernel. Typically, one block in the kernel launch handles one channel's task, and every block operates on the corresponding channel's task description. Thus, different blocks can have different working behaviors, and they are running in parallel.
 
 **NCCL supports three protocols: SIMPLE, LL, and LL128, where LL stands for low latency.** SIMPLE is suitable for transferring large messages, where the ![eqn3](https://latex.codecogs.com/svg.image?\beta) factor (bandwidth factor) dominates. LL and LL128 are suitable for transferring small messages, where the ![eqn4](https://latex.codecogs.com/svg.image?\alpha) factor (link latency) dominates. We provide a brief description of these protocols below. If you are not interested, feel free to skip it.
 
@@ -281,6 +283,13 @@ Finally, we emphasize some characteristics of NCCL.
 **The P2P primitives, which appeared since NCCL 2.7, were implemented by re‑using the same internal engine—channels, chunks, slices, and FIFO flags—that had already powered the collective kernels.** We only mention some major differences compared to P2P functions: (1) Each algorithm (`NCCL_ALGO`) has its own CUDA kernel (e.g., AllReduce Ring, AllReduce Tree). (2) The looping structure of the collective kernels is more complex than the P2P kernel because several stages are needed to process a piece of data.
 
 ## NCCL Initialization: More Words on Channel Search
+
+> **Note:** We explain the details of NCCL runtime in the following notes.
+>
+> - [09-p2p-functions](09-p2p-functions.md)
+>
+> - [10-collective-functions](10-collective-functions.md)
+>
 
 Previously, we omitted many intermediate steps in how [`initTransportsRank()`](https://github.com/NVIDIA/nccl/blob/v2.25.1-1/src/init.cc#L659) detects and builds transport channels over the data communication network. It has the following steps:
 
